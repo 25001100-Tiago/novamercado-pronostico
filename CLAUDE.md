@@ -16,20 +16,37 @@ TEST_DATABASE_URL=postgresql+psycopg://u:p@localhost:5432/db .venv/bin/python -m
 
 `pyproject.toml` configura `pythonpath = ["src", "."]` para pytest (paquetes `novamercado` y `api`).
 
+## Stack (docker compose)
+
+```bash
+docker compose up -d --build                     # db-producto, db-airflow, mlflow, airflow-*, bootstrap, api
+.venv/bin/python scripts/auditoria_evaluador.py   # auditoría en vivo -> docs/evidencia/reporte_auditoria.md
+```
+Desde PowerShell, ejecutar comandos de WSL con `wsl -e bash script.sh` (las comillas internas se pierden).
+
 ## Estructura
 
 - `src/novamercado/` — lógica de dominio
   - `config.py` — variables de entorno (`DATABASE_URL`, `NOVAMERCADO_DATA_DIR`).
   - `catalogos.py` — tiendas, familias, costos, feriados + estadísticas del histórico (máximos, rango de fechas).
   - `limpieza.py` — **motor de defensa del contrato** (reparar / advertir / rechazar).
-  - `db.py` — persistencia SQLAlchemy Core (PostgreSQL; SQLite en memoria para pruebas).
-- `api/esquemas.py` — modelos Pydantic estrictos + fachada `validar_prediccion` / `validar_observaciones` / `cuerpo_error`.
-- `dags/` (Airflow), `docker/` (imágenes/compose), `scripts/`, `tests/`, `docs/evidencia/`.
-- `data/raw/` — datos crudos versionados. Ejemplos válidos en `data/raw/ejemplos/`, casos E01–E10 en `data/raw/errores/`.
+  - `db.py` — persistencia SQLAlchemy Core (PostgreSQL; SQLite en memoria para pruebas) + `leer_catalogos` desde la BD.
+  - `modelo.py` — `construir_features` (misma función para entrenar y servir), costo de negocio, factores, `ArtefactoModelo`.
+  - `entrenamiento.py` — entrenamiento, compuerta `decidir_promocion` y CLI de pasos del DAG (`preparar|entrenar|promover|fallar`).
+  - `registro.py` — MLflow (experimento `novamercado-ventas`, modelo `novamercado-pronostico`, alias `champion`/`challenger`).
+  - `bootstrap.py` — carga CSV y primer modelo solo si faltan.
+- `api/` — `main.py` (endpoints, `crear_app(fabrica)` para inyectar dobles en pruebas), `esquemas.py`,
+  `servicio_modelo.py` (caché + hot-reload), `salud.py` (monitor 15 s), `airflow_cliente.py` (REST v2).
+- `dags/reentrenamiento_novamercado.py` — BashOperator que llama al CLI con `NOVAMERCADO_PYTHON` (venv aislado).
+- `docker/` — Dockerfiles; `docker-compose.yml` en la raíz.
+- `data/raw/` — datos publicados **no versionados** (ver `data/raw/LEEME.md`); las pruebas se omiten si faltan.
 
 ## Contrato (no romper)
 
-- `POST /v1/prediccion`: `{tienda_id, fecha, familias: [{familia_id, en_promocion}]}`.
+- `POST /v1/prediccion`: `{tienda_id, fecha, familias: [{familia_id, en_promocion}]}` →
+  `{tienda_id, fecha, version_modelo (str), predicciones: [{familia_id, en_promocion, venta_esperada, cantidad_sugerida (int>=0)}], calidad}`.
+- `POST /admin/reentrenar` → 202 `{id}`; `GET /admin/reentrenar/{id}` → `en_curso|exitoso|fallido` (+ `promovido`, `version`, `motivo` al terminar).
+- `GET /modelo` → `{nombre, alias, version}` (str). `GET /health` → `ok` | `degradado`+`motivo` (200) | 503 sin modelo.
 - `POST /v1/observaciones`: `{tienda_id, fecha, ventas: [{familia_id, ventas, en_promocion?}]}` → `{registros_guardados, calidad}`.
 - Bloque de calidad **exacto**: `{"estado": "ok"|"corregido"|"advertencia", "observaciones": [{"campo", "accion", "detalle"}]}`.
   - `accion` ∈ `reparar` | `advertir`. `estado == "ok"` ⇔ `observaciones == []`.
