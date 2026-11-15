@@ -1,6 +1,14 @@
-pydantic>=2.9
-fastapi>=0.115
-sqlalchemy>=2.0.36
-psycopg[binary]>=3.2
-pandas>=2.2
-python-dotenv>=1.0
+# Dependencias de ejecución (API, bootstrap y entorno de entrenamiento de Airflow).
+# Versiones fijas para imágenes reproducibles.
+pydantic==2.14.3
+fastapi==0.163.0
+uvicorn==0.54.0
+httpx==0.28.1
+sqlalchemy==2.1.8
+psycopg[binary]==3.3.9
+pandas==3.1.1
+numpy==2.5.4
+scikit-learn==1.9.1
+joblib==1.6.0
+mlflow-skinny==3.17.2
+python-dotenv==1.2.4

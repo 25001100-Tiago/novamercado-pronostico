@@ -143,20 +143,54 @@ class SolicitudObservaciones(_SolicitudBase):
 # --------------------------------------------------------------------------- #
 class PrediccionFamilia(_Base):
     familia_id: str
-    prediccion: float = Field(ge=0)
+    en_promocion: int = Field(ge=0)
+    venta_esperada: float = Field(ge=0)
+    cantidad_sugerida: StrictInt = Field(ge=0)
 
 
 class RespuestaPrediccion(_Base):
     tienda_id: int
     fecha: date
-    version_modelo: str = Field(min_length=1)
+    version_modelo: StrictStr = Field(min_length=1)
     predicciones: list[PrediccionFamilia]
     calidad: Calidad
 
 
 class RespuestaObservaciones(_Base):
-    registros_guardados: int = Field(ge=0)
+    registros_guardados: StrictInt = Field(ge=0)
     calidad: Calidad
+
+
+class RespuestaModelo(_Base):
+    nombre: StrictStr
+    alias: StrictStr
+    version: StrictStr
+
+
+class RespuestaReentrenar(_Base):
+    id: StrictStr
+
+
+class EstadoReentrenamiento(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: StrictStr
+    estado: Literal["en_curso", "exitoso", "fallido"]
+    promovido: bool | None = None
+    version: StrictStr | None = None
+    motivo: StrictStr | None = None
+
+    def a_respuesta(self) -> dict[str, Any]:
+        """Mientras está en curso solo se informan id y estado; al terminar, todo."""
+        if self.estado == "en_curso":
+            return {"id": self.id, "estado": self.estado}
+        return {
+            "id": self.id,
+            "estado": self.estado,
+            "promovido": bool(self.promovido),
+            "version": self.version or "",
+            "motivo": self.motivo or "",
+        }
 
 
 class ErrorDetalle(_Base):

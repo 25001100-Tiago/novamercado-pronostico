@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from novamercado.catalogos import cargar_catalogos
@@ -13,6 +14,16 @@ from novamercado.db import Repositorio, cargar_catalogos_en_bd, crear_motor, ini
 DIR_DATOS = Path(__file__).resolve().parents[1] / "data" / "raw"
 DIR_EJEMPLOS = DIR_DATOS / "ejemplos"
 DIR_ERRORES = DIR_DATOS / "errores"
+HAY_DATOS = (DIR_DATOS / "tiendas.csv").exists() and (DIR_DATOS / "historico_ventas.csv").exists()
+
+
+def pytest_collection_modifyitems(config, items):
+    """Los datos publicados no se versionan: sin data/raw las pruebas se omiten con aviso."""
+    if HAY_DATOS:
+        return
+    marca = pytest.mark.skip(reason="faltan los datos publicados en data/raw/ (ver README)")
+    for item in items:
+        item.add_marker(marca)
 
 
 def leer_json(ruta: Path) -> dict:
@@ -22,6 +33,11 @@ def leer_json(ruta: Path) -> dict:
 @pytest.fixture(scope="session")
 def cat():
     return cargar_catalogos(DIR_DATOS)
+
+
+@pytest.fixture(scope="session")
+def historico() -> pd.DataFrame:
+    return pd.read_csv(DIR_DATOS / "historico_ventas.csv")
 
 
 @pytest.fixture

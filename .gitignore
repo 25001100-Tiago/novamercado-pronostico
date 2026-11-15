@@ -25,11 +25,16 @@ airflow/logs/
 dags/__pycache__/
 logs/
 
-# Datos generados (los datos crudos de data/raw SÍ se versionan)
-data/procesados/
-data/interim/
+# Datos: los archivos publicados se colocan en data/raw/ y NO se versionan
+data/*
+!data/raw/
+data/raw/*
+!data/raw/LEEME.md
 *.db
 *.sqlite
+
+# Scripts temporales locales
+.tmp/
 
 # Editores / SO
 .vscode/

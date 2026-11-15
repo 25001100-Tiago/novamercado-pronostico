@@ -743,13 +743,13 @@ def test_registrar_predicciones_con_version_modelo(repo, cat, pred_valida):
 def test_ciclo_de_vida_de_ejecucion_de_reentrenamiento(repo):
     eid = repo.crear_ejecucion(motivo="llegaron 7 días nuevos de observaciones")
     e = repo.obtener_ejecucion(eid)
-    assert e["estado"] == "pendiente" and e["promovido"] is False and e["version"] is None
-    assert e["motivo"].startswith("llegaron")
-    repo.actualizar_ejecucion(eid, estado="en_curso")
-    repo.actualizar_ejecucion(eid, estado="completada", promovido=True, version="4",
+    assert e["estado"] == "en_curso" and e["promovido"] is False and e["version"] is None
+    assert e["motivo"].startswith("llegaron") and e["finalizado_en"] is None
+    repo.actualizar_ejecucion(eid, airflow_run_id="api__x")
+    repo.actualizar_ejecucion(eid, estado="exitoso", promovido=True, version="4",
                               metricas={"costo_candidato": 10.2, "costo_produccion": 11.0})
     e = repo.obtener_ejecucion(eid)
-    assert (e["estado"], e["promovido"], e["version"]) == ("completada", True, "4")
+    assert (e["estado"], e["promovido"], e["version"], e["airflow_run_id"]) == ("exitoso", True, "4", "api__x")
     assert e["metricas"]["costo_candidato"] == 10.2 and e["finalizado_en"] is not None
     assert [x["id"] for x in repo.listar_ejecuciones()] == [eid]
 
@@ -757,14 +757,20 @@ def test_ciclo_de_vida_de_ejecucion_de_reentrenamiento(repo):
 def test_ejecucion_estado_invalido_o_inexistente(repo):
     eid = repo.crear_ejecucion("prueba")
     with pytest.raises(ValueError):
-        repo.actualizar_ejecucion(eid, estado="terminada")
+        repo.actualizar_ejecucion(eid, estado="completada")
     with pytest.raises(KeyError):
-        repo.actualizar_ejecucion("no-existe", estado="fallida")
+        repo.actualizar_ejecucion("no-existe", estado="fallido")
     assert repo.obtener_ejecucion("no-existe") is None
 
 
-def test_metadata_no_depende_de_mlflow():
+def test_contrato_y_bd_no_dependen_de_mlflow():
+    import subprocess
     import sys
 
-    assert "mlflow" not in sys.modules
-    assert metadata.tables  # el esquema se define sin servicios externos
+    codigo = ("import sys; import api.esquemas, novamercado.db, novamercado.limpieza; "
+              "assert 'mlflow' not in sys.modules, 'se importó mlflow'")
+    raiz = Path(__file__).resolve().parents[1]
+    r = subprocess.run([sys.executable, "-c", codigo], cwd=raiz, capture_output=True, text=True,
+                       env={"PYTHONPATH": f"{raiz / 'src'}:{raiz}", "PATH": ""})
+    assert r.returncode == 0, r.stderr
+    assert metadata.tables
