@@ -1,0 +1,39 @@
+# Entornos y secretos
+.venv/
+venv/
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Artefactos de ML / orquestación
+mlruns/
+mlartifacts/
+artefactos/
+modelos/*.pkl
+airflow/logs/
+dags/__pycache__/
+logs/
+
+# Datos generados (los datos crudos de data/raw SÍ se versionan)
+data/procesados/
+data/interim/
+*.db
+*.sqlite
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
