@@ -14,8 +14,6 @@ TEST_DATABASE_URL=postgresql+psycopg://u:p@localhost:5432/db .venv/bin/python -m
 .venv/bin/python scripts/inicializar_bd.py          # esquema + catálogos + histórico (idempotente)
 ```
 
-`pyproject.toml` configura `pythonpath = ["src", "."]` para pytest (paquetes `novamercado` y `api`).
-
 ## Stack (docker compose)
 
 ```bash
@@ -24,28 +22,13 @@ docker compose up -d --build                     # db-producto, db-airflow, mlfl
 ```
 Desde PowerShell, ejecutar comandos de WSL con `wsl -e bash script.sh` (las comillas internas se pierden).
 
-## Estructura
-
-- `src/novamercado/` — lógica de dominio
-  - `config.py` — variables de entorno (`DATABASE_URL`, `NOVAMERCADO_DATA_DIR`).
-  - `catalogos.py` — tiendas, familias, costos, feriados + estadísticas del histórico (máximos, rango de fechas).
-  - `limpieza.py` — **motor de defensa del contrato** (reparar / advertir / rechazar).
-  - `db.py` — persistencia SQLAlchemy Core (PostgreSQL; SQLite en memoria para pruebas) + `leer_catalogos` desde la BD.
-  - `modelo.py` — `construir_features` (misma función para entrenar y servir), costo de negocio, factores, `ArtefactoModelo`.
-  - `entrenamiento.py` — entrenamiento, compuerta `decidir_promocion` y CLI de pasos del DAG (`preparar|entrenar|promover|fallar`).
-  - `registro.py` — MLflow (experimento `novamercado-ventas`, modelo `novamercado-pronostico`, alias `champion`/`challenger`).
-  - `bootstrap.py` — carga CSV y primer modelo solo si faltan.
-- `api/` — `main.py` (endpoints, `crear_app(fabrica)` para inyectar dobles en pruebas), `esquemas.py`,
-  `servicio_modelo.py` (caché + hot-reload), `salud.py` (monitor 15 s), `airflow_cliente.py` (REST v2).
-- `dags/reentrenamiento_novamercado.py` — BashOperator que llama al CLI con `NOVAMERCADO_PYTHON` (venv aislado).
-- `docker/` — Dockerfiles; `docker-compose.yml` en la raíz.
-- `data/raw/` — datos publicados **no versionados** (ver `data/raw/LEEME.md`); las pruebas se omiten si faltan.
-
 ## Contrato (no romper)
 
 - `POST /v1/prediccion`: `{tienda_id, fecha, familias: [{familia_id, en_promocion}]}` →
-  `{tienda_id, fecha, version_modelo (str), predicciones: [{familia_id, en_promocion, venta_esperada, cantidad_sugerida (int>=0)}], calidad}`.
-- `POST /admin/reentrenar` → 202 `{id}`; `GET /admin/reentrenar/{id}` → `en_curso|exitoso|fallido` (+ `promovido`, `version`, `motivo` al terminar).
+  `{tienda_id, fecha, version_modelo (str), predicciones: [{familia_id, venta_esperada (float), cantidad_sugerida (int>=0)}], calidad}`.
+  Cada predicción lleva **solo** esos tres campos (Anexo); no agregar `en_promocion` ni otros.
+- `POST /admin/reentrenar` (sin cuerpo) → 202 `{id}` | 503; `GET /admin/reentrenar/{id}` → `{estado}` en curso;
+  al terminar `{estado, promovido (bool), version (str), motivo}`; sin `id` en el cuerpo; 404 si no existe.
 - `GET /modelo` → `{nombre, alias, version}` (str). `GET /health` → `ok` | `degradado`+`motivo` (200) | 503 sin modelo.
 - `POST /v1/observaciones`: `{tienda_id, fecha, ventas: [{familia_id, ventas, en_promocion?}]}` → `{registros_guardados, calidad}`.
 - Bloque de calidad **exacto**: `{"estado": "ok"|"corregido"|"advertencia", "observaciones": [{"campo", "accion", "detalle"}]}`.
@@ -55,24 +38,11 @@ Desde PowerShell, ejecutar comandos de WSL con `wsl -e bash script.sh` (las comi
 - Los endpoints deben recibir el JSON **crudo** (`dict`/`Body`) y pasarlo por `validar_*`; no declarar el modelo
   estricto como parámetro de FastAPI (su 422 automático impediría reparar).
 
-## Política de limpieza (resumen; detalle en el docstring de `limpieza.py`)
-
-| Caso | Acción |
-|---|---|
-| E01 tienda `"T05"`, `"05"`, `"tienda_5"`, `5.0` | reparar |
-| E02 familia `"LÁCTEOS"`, `"Frutas y Verduras"`, typo leve con coincidencia única | reparar |
-| E03/E10 números como texto, `8.0`, `"1,292"` (miles), `"50,0"` (coma decimal) | reparar |
-| E04 fecha DD/MM/AAAA, AAAA/MM/DD, DD-MM-AAAA, ISO con hora, AAAAMMDD | reparar (DD/MM ambiguo → advertir) |
-| E07 campo renombrado con sinónimo conocido (`tienda`) | reparar (alias contradictorio → rechazar) |
-| E05 faltan familias | advertir (se pronostica/guarda solo lo enviado) |
-| E06 familia repetida | idénticas → reparar; distintas → advertir, se conserva la última |
-| `en_promocion` nulo/ausente | advertir, se asume 0 |
-| Valor extremo (> máx. histórico) | advertir; inverosímil (≥ 10–20× máx.) → rechazar |
-| Campo desconocido | advertir y se ignora |
-| E08 negativos, no enteros, `"994.000"` ambiguo, tienda inexistente/≤0, familia irreconocible, fecha inválida o anterior a la apertura, lista vacía, campo obligatorio ausente | rechazar 422 |
-| E09 envío repetido | se acepta; la BD lo hace idempotente (`registros_guardados: 0`) |
+La política reparar / advertir / rechazar (casos E01–E10) está en el docstring de `src/novamercado/limpieza.py`.
 
 ## Reglas críticas
+
+- `data/raw/` contiene los datos publicados y **no se versiona** (ver `data/raw/LEEME.md`); las pruebas se omiten si faltan.
 
 - **Nunca** usar `datetime.today()`, `date.today()`, `datetime.now()` ni `time.time()` para validar o decidir:
   operamos con fechas simuladas. El "hoy" es `fecha_referencia` o el último día con datos

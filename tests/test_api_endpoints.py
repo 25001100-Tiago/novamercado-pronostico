@@ -145,7 +145,8 @@ def test_prediccion_valida_formato_completo(entorno):
     assert d["calidad"] == {"estado": "ok", "observaciones": []}
     assert len(d["predicciones"]) == 12
     for p in d["predicciones"]:
-        assert set(p) == {"familia_id", "en_promocion", "venta_esperada", "cantidad_sugerida"}
+        assert set(p) == {"familia_id", "venta_esperada", "cantidad_sugerida"}  # exacto según el Anexo
+        assert isinstance(p["familia_id"], str)
         assert isinstance(p["cantidad_sugerida"], int) and p["cantidad_sugerida"] >= 0
         assert isinstance(p["venta_esperada"], float) and p["venta_esperada"] >= 0
 
@@ -267,7 +268,7 @@ def test_reentrenar_202_y_estado_en_curso(entorno):
     assert isinstance(id_, str) and set(r.json()) == {"id"}
     assert entorno["airflow"].disparos == [{"ejecucion_id": id_}]
     e = c.get(f"/admin/reentrenar/{id_}")
-    assert e.status_code == 200 and e.json() == {"id": id_, "estado": "en_curso"}
+    assert e.status_code == 200 and e.json() == {"estado": "en_curso"}
 
 
 def test_reentrenar_exitoso_incluye_promovido_version_motivo(entorno):
@@ -276,7 +277,7 @@ def test_reentrenar_exitoso_incluye_promovido_version_motivo(entorno):
     repo.actualizar_ejecucion(id_, estado="exitoso", promovido=True, version="2",
                               motivo="el candidato redujo el costo")
     d = c.get(f"/admin/reentrenar/{id_}").json()
-    assert d == {"id": id_, "estado": "exitoso", "promovido": True, "version": "2",
+    assert d == {"estado": "exitoso", "promovido": True, "version": "2",
                  "motivo": "el candidato redujo el costo"}
     assert isinstance(d["version"], str) and isinstance(d["promovido"], bool)
 

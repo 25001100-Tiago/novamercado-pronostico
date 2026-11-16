@@ -1,16 +1,13 @@
 # Reporte de auditoría — NovaMercado
 
-- Ejecutada: 2026-11-15 01:04:04 (duración 2 min)
-- Arranque desde cero inmediatamente antes de esta auditoría (`docker compose down -v` y luego
-  `docker compose up -d --build`): `GET /health` → 200 `{"estado":"ok"}` a los **70 s**
-  (carga de 83 052 filas + entrenamiento y registro del primer modelo incluidos).
+- Ejecutada: 2026-11-15 20:19:52 (duración 2 min)
 - API: `http://localhost:8000` · MLflow: `http://localhost:5000`
-- Resultado: **85/85 chequeos aprobados** — **TODAS LAS PRUEBAS PASAN**
+- Resultado: **86/86 chequeos aprobados** — **TODAS LAS PRUEBAS PASAN**
 
 | # | Prueba | Resultado | Chequeos |
 |---|---|---|---|
 | 1 | Salud inicial y modelo | ✅ pasa | 4/4 |
-| 2 | Contrato y defensa ante errores | ✅ pasa | 57/57 |
+| 2 | Contrato y defensa ante errores | ✅ pasa | 58/58 |
 | 3 | Operación diaria e idempotencia de observaciones | ✅ pasa | 2/2 |
 | 4 | Ciclo de reentrenamiento y hot-reload | ✅ pasa | 8/8 |
 | 5 | Caída de MLflow | ✅ pasa | 4/4 |
@@ -18,9 +15,9 @@
 
 ## 1. Salud inicial y modelo
 
-- ✅ GET /health → 200 con estado == 'ok'
+- ✅ GET /health → 200 con exactamente {"estado": "ok"}
 - ✅ GET /modelo → 200
-- ✅ nombre, alias y version son str
+- ✅ exactamente {nombre, alias, version}, todos str
 - ✅ alias == 'champion'
 
 Notas:
@@ -55,51 +52,52 @@ Respuesta:
 ## 2. Contrato y defensa ante errores
 
 - ✅ ejemplos/observacion_valida.json → 200 y calidad 'ok'
+- ✅ ejemplos/observacion_valida.json: exactamente {registros_guardados (int), calidad}
 - ✅ ejemplos/prediccion_valida.json → 200 y calidad 'ok'
-- ✅ ejemplos/prediccion_valida.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ ejemplos/prediccion_valida.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E01_tienda_texto.json → 200 con calidad 'corregido'
-- ✅ errores/E01_tienda_texto.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E01_tienda_texto.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E02_familia_otra_forma.json → 200 con calidad 'corregido'
-- ✅ errores/E02_familia_otra_forma.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E02_familia_otra_forma.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E03_promocion_texto.json → 200 con calidad 'corregido'
-- ✅ errores/E03_promocion_texto.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E03_promocion_texto.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E04_fecha_formato.json → 200 con calidad 'corregido'
-- ✅ errores/E04_fecha_formato.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E04_fecha_formato.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E05_faltan_familias.json → 200 con calidad 'advertencia'
-- ✅ errores/E05_faltan_familias.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E05_faltan_familias.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E06_familia_repetida.json → 200 con calidad 'advertencia'
-- ✅ errores/E06_familia_repetida.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E06_familia_repetida.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E07_campo_renombrado.json → 200 con calidad 'corregido'
-- ✅ errores/E07_campo_renombrado.json: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ errores/E07_campo_renombrado.json: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ errores/E08_ventas_negativas.json → 422 con detail
 - ✅ errores/E09_envio_repetido.json → 200 con calidad 'ok'
 - ✅ errores/E10_numero_formato.json → 200 con calidad 'corregido'
 - ✅ tienda como texto con prefijo 'tienda_05' → 200 con calidad 'corregido'
-- ✅ tienda como texto con prefijo 'tienda_05': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ tienda como texto con prefijo 'tienda_05': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ tienda como texto ' 5 ' → 200 con calidad 'corregido'
-- ✅ tienda como texto ' 5 ': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ tienda como texto ' 5 ': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ familia con mayúsculas y guion 'Cuidado-Personal' → 200 con calidad 'corregido'
-- ✅ familia con mayúsculas y guion 'Cuidado-Personal': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ familia con mayúsculas y guion 'Cuidado-Personal': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ familia con tilde 'PANADERÍA' → 200 con calidad 'corregido'
-- ✅ familia con tilde 'PANADERÍA': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ familia con tilde 'PANADERÍA': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ familia con error tipográfico 'Lacteso' → 200 con calidad 'corregido'
-- ✅ familia con error tipográfico 'Lacteso': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ familia con error tipográfico 'Lacteso': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ fecha AAAA/MM/DD → 200 con calidad 'corregido'
-- ✅ fecha AAAA/MM/DD: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ fecha AAAA/MM/DD: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ fecha invertida MM/DD/AAAA '11/17/2025' → 200 con calidad 'corregido'
-- ✅ fecha invertida MM/DD/AAAA '11/17/2025': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ fecha invertida MM/DD/AAAA '11/17/2025': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ fecha ambigua DD/MM '05/11/2025' → 200 con calidad 'advertencia'
-- ✅ fecha ambigua DD/MM '05/11/2025': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ fecha ambigua DD/MM '05/11/2025': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ en_promocion nulo → 200 con calidad 'advertencia'
-- ✅ en_promocion nulo: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ en_promocion nulo: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ en_promocion ausente → 200 con calidad 'advertencia'
-- ✅ en_promocion ausente: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ en_promocion ausente: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ en_promocion '3,0' con coma decimal → 200 con calidad 'corregido'
-- ✅ en_promocion '3,0' con coma decimal: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ en_promocion '3,0' con coma decimal: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ campo 'Fecha' con mayúscula → 200 con calidad 'corregido'
-- ✅ campo 'Fecha' con mayúscula: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ campo 'Fecha' con mayúscula: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ campo desconocido 'canal' → 200 con calidad 'advertencia'
-- ✅ campo desconocido 'canal': version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ campo desconocido 'canal': campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ FATAL tienda inexistente 99 → 422 con detail
 - ✅ FATAL tienda negativa -3 → 422 con detail
 - ✅ FATAL familia irreconocible 'juguetes' → 422 con detail
@@ -114,7 +112,7 @@ Respuesta:
 
 <details><summary>Evidencia (JSON reales)</summary>
 
-**ejemplos/observacion_valida.json** — `POST /v1/observaciones` → HTTP 200 (249 ms)
+**ejemplos/observacion_valida.json** — `POST /v1/observaciones` → HTTP 200 (373 ms)
 
 Solicitud:
 ```json
@@ -186,7 +184,7 @@ Respuesta:
 ```
 
 
-**ejemplos/prediccion_valida.json** — `POST /v1/prediccion` → HTTP 200 (127 ms)
+**ejemplos/prediccion_valida.json** — `POST /v1/prediccion` → HTTP 200 (120 ms)
 
 Solicitud:
 ```json
@@ -255,73 +253,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -334,7 +320,7 @@ Respuesta:
 ```
 
 
-**errores/E01_tienda_texto.json** — `POST /v1/prediccion` → HTTP 200 (83 ms)
+**errores/E01_tienda_texto.json** — `POST /v1/prediccion` → HTTP 200 (89 ms)
 
 Solicitud:
 ```json
@@ -403,73 +389,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -488,7 +462,7 @@ Respuesta:
 ```
 
 
-**errores/E02_familia_otra_forma.json** — `POST /v1/prediccion` → HTTP 200 (85 ms)
+**errores/E02_familia_otra_forma.json** — `POST /v1/prediccion` → HTTP 200 (94 ms)
 
 Solicitud:
 ```json
@@ -557,73 +531,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -647,7 +609,7 @@ Respuesta:
 ```
 
 
-**errores/E03_promocion_texto.json** — `POST /v1/prediccion` → HTTP 200 (79 ms)
+**errores/E03_promocion_texto.json** — `POST /v1/prediccion` → HTTP 200 (85 ms)
 
 Solicitud:
 ```json
@@ -716,73 +678,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -806,7 +756,7 @@ Respuesta:
 ```
 
 
-**errores/E04_fecha_formato.json** — `POST /v1/prediccion` → HTTP 200 (86 ms)
+**errores/E04_fecha_formato.json** — `POST /v1/prediccion` → HTTP 200 (80 ms)
 
 Solicitud:
 ```json
@@ -875,73 +825,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -960,7 +898,7 @@ Respuesta:
 ```
 
 
-**errores/E05_faltan_familias.json** — `POST /v1/prediccion` → HTTP 200 (84 ms)
+**errores/E05_faltan_familias.json** — `POST /v1/prediccion` → HTTP 200 (90 ms)
 
 Solicitud:
 ```json
@@ -1021,61 +959,51 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -1094,7 +1022,7 @@ Respuesta:
 ```
 
 
-**errores/E06_familia_repetida.json** — `POST /v1/prediccion` → HTTP 200 (90 ms)
+**errores/E06_familia_repetida.json** — `POST /v1/prediccion` → HTTP 200 (122 ms)
 
 Solicitud:
 ```json
@@ -1167,73 +1095,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 3,
       "venta_esperada": 1130.47,
       "cantidad_sugerida": 1368
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -1252,7 +1168,7 @@ Respuesta:
 ```
 
 
-**errores/E07_campo_renombrado.json** — `POST /v1/prediccion` → HTTP 200 (83 ms)
+**errores/E07_campo_renombrado.json** — `POST /v1/prediccion` → HTTP 200 (90 ms)
 
 Solicitud:
 ```json
@@ -1321,73 +1237,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -1406,7 +1310,7 @@ Respuesta:
 ```
 
 
-**errores/E08_ventas_negativas.json** — `POST /v1/observaciones` → HTTP 422 (7 ms)
+**errores/E08_ventas_negativas.json** — `POST /v1/observaciones` → HTTP 422 (17 ms)
 
 Solicitud:
 ```json
@@ -1480,7 +1384,7 @@ Respuesta:
 ```
 
 
-**errores/E09_envio_repetido.json** — `POST /v1/observaciones` → HTTP 200 (11 ms)
+**errores/E09_envio_repetido.json** — `POST /v1/observaciones` → HTTP 200 (12 ms)
 
 Solicitud:
 ```json
@@ -1635,7 +1539,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: tienda como texto con prefijo 'tienda_05'** — `POST /v1/prediccion` → HTTP 200 (103 ms)
+**Caso nuevo: tienda como texto con prefijo 'tienda_05'** — `POST /v1/prediccion` → HTTP 200 (85 ms)
 
 Solicitud:
 ```json
@@ -1704,73 +1608,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -1789,7 +1681,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: tienda como texto ' 5 '** — `POST /v1/prediccion` → HTTP 200 (86 ms)
+**Caso nuevo: tienda como texto ' 5 '** — `POST /v1/prediccion` → HTTP 200 (123 ms)
 
 Solicitud:
 ```json
@@ -1858,73 +1750,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -1943,7 +1823,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: familia con mayúsculas y guion 'Cuidado-Personal'** — `POST /v1/prediccion` → HTTP 200 (85 ms)
+**Caso nuevo: familia con mayúsculas y guion 'Cuidado-Personal'** — `POST /v1/prediccion` → HTTP 200 (317 ms)
 
 Solicitud:
 ```json
@@ -2012,73 +1892,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -2097,7 +1965,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: familia con tilde 'PANADERÍA'** — `POST /v1/prediccion` → HTTP 200 (86 ms)
+**Caso nuevo: familia con tilde 'PANADERÍA'** — `POST /v1/prediccion` → HTTP 200 (108 ms)
 
 Solicitud:
 ```json
@@ -2166,73 +2034,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -2251,7 +2107,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: familia con error tipográfico 'Lacteso'** — `POST /v1/prediccion` → HTTP 200 (99 ms)
+**Caso nuevo: familia con error tipográfico 'Lacteso'** — `POST /v1/prediccion` → HTTP 200 (112 ms)
 
 Solicitud:
 ```json
@@ -2320,73 +2176,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -2405,7 +2249,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: fecha AAAA/MM/DD** — `POST /v1/prediccion` → HTTP 200 (80 ms)
+**Caso nuevo: fecha AAAA/MM/DD** — `POST /v1/prediccion` → HTTP 200 (81 ms)
 
 Solicitud:
 ```json
@@ -2474,73 +2318,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -2559,7 +2391,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: fecha invertida MM/DD/AAAA '11/17/2025'** — `POST /v1/prediccion` → HTTP 200 (89 ms)
+**Caso nuevo: fecha invertida MM/DD/AAAA '11/17/2025'** — `POST /v1/prediccion` → HTTP 200 (116 ms)
 
 Solicitud:
 ```json
@@ -2628,73 +2460,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -2713,7 +2533,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: fecha ambigua DD/MM '05/11/2025'** — `POST /v1/prediccion` → HTTP 200 (87 ms)
+**Caso nuevo: fecha ambigua DD/MM '05/11/2025'** — `POST /v1/prediccion` → HTTP 200 (103 ms)
 
 Solicitud:
 ```json
@@ -2782,73 +2602,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 997.25,
       "cantidad_sugerida": 1207
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 71.46,
       "cantidad_sugerida": 92
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 950.48,
       "cantidad_sugerida": 1150
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 225.79,
       "cantidad_sugerida": 201
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 173.4,
       "cantidad_sugerida": 232
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 348.16,
       "cantidad_sugerida": 313
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 451.22,
       "cantidad_sugerida": 438
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 92.66,
       "cantidad_sugerida": 129
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 208.96,
       "cantidad_sugerida": 267
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 46.36,
       "cantidad_sugerida": 57
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 236.08,
       "cantidad_sugerida": 191
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 366.12,
       "cantidad_sugerida": 417
     }
@@ -2867,7 +2675,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: en_promocion nulo** — `POST /v1/prediccion` → HTTP 200 (92 ms)
+**Caso nuevo: en_promocion nulo** — `POST /v1/prediccion` → HTTP 200 (135 ms)
 
 Solicitud:
 ```json
@@ -2936,73 +2744,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -3021,7 +2817,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: en_promocion ausente** — `POST /v1/prediccion` → HTTP 200 (80 ms)
+**Caso nuevo: en_promocion ausente** — `POST /v1/prediccion` → HTTP 200 (118 ms)
 
 Solicitud:
 ```json
@@ -3089,73 +2885,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -3174,7 +2958,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: en_promocion '3,0' con coma decimal** — `POST /v1/prediccion` → HTTP 200 (83 ms)
+**Caso nuevo: en_promocion '3,0' con coma decimal** — `POST /v1/prediccion` → HTTP 200 (97 ms)
 
 Solicitud:
 ```json
@@ -3243,73 +3027,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 3,
       "venta_esperada": 907.28,
       "cantidad_sugerida": 1098
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -3397,73 +3169,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -3482,7 +3242,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: campo desconocido 'canal'** — `POST /v1/prediccion` → HTTP 200 (354 ms)
+**Caso nuevo: campo desconocido 'canal'** — `POST /v1/prediccion` → HTTP 200 (104 ms)
 
 Solicitud:
 ```json
@@ -3552,73 +3312,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -3637,7 +3385,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL tienda inexistente 99** — `POST /v1/prediccion` → HTTP 422 (9 ms)
+**Caso nuevo: FATAL tienda inexistente 99** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -3711,7 +3459,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL tienda negativa -3** — `POST /v1/prediccion` → HTTP 422 (10 ms)
+**Caso nuevo: FATAL tienda negativa -3** — `POST /v1/prediccion` → HTTP 422 (7 ms)
 
 Solicitud:
 ```json
@@ -3785,7 +3533,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL familia irreconocible 'juguetes'** — `POST /v1/prediccion` → HTTP 422 (7 ms)
+**Caso nuevo: FATAL familia irreconocible 'juguetes'** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -3859,7 +3607,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL fecha inexistente 2025-02-30** — `POST /v1/prediccion` → HTTP 422 (10 ms)
+**Caso nuevo: FATAL fecha inexistente 2025-02-30** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -3933,7 +3681,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL fecha anterior a la apertura (tienda 10)** — `POST /v1/prediccion` → HTTP 422 (9 ms)
+**Caso nuevo: FATAL fecha anterior a la apertura (tienda 10)** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -4007,7 +3755,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL en_promocion negativo** — `POST /v1/prediccion` → HTTP 422 (9 ms)
+**Caso nuevo: FATAL en_promocion negativo** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -4081,7 +3829,7 @@ Respuesta:
 ```
 
 
-**Caso nuevo: FATAL en_promocion decimal 2.5** — `POST /v1/prediccion` → HTTP 422 (7 ms)
+**Caso nuevo: FATAL en_promocion decimal 2.5** — `POST /v1/prediccion` → HTTP 422 (8 ms)
 
 Solicitud:
 ```json
@@ -4253,7 +4001,7 @@ Respuesta:
 ```
 
 
-**FATAL cuerpo que no es JSON** — `POST /v1/prediccion` → HTTP 422 (7 ms)
+**FATAL cuerpo que no es JSON** — `POST /v1/prediccion` → HTTP 422 (5 ms)
 
 Respuesta:
 ```json
@@ -4269,7 +4017,7 @@ Respuesta:
 ```
 
 
-**FATAL ventas no numéricas** — `POST /v1/observaciones` → HTTP 422 (7 ms)
+**FATAL ventas no numéricas** — `POST /v1/observaciones` → HTTP 422 (6 ms)
 
 Solicitud:
 ```json
@@ -4362,10 +4110,10 @@ Respuesta:
 | 2026-03-07 | 2026-03-06 | 120 | 10 |
 | 2026-03-08 | 2026-03-07 | 120 | 10 |
 
-Costo de negocio real de las cantidades sugeridas en la simulación (60 tienda-días evaluados): **19,075.50**
+Costo de negocio real de las cantidades sugeridas en la simulación (60 tienda-días evaluados): **19,094.80**
 
 
-**Observaciones 2026-03-01 tienda 1 (1er envío)** — `POST /v1/observaciones` → HTTP 200 (18 ms)
+**Observaciones 2026-03-01 tienda 1 (1er envío)** — `POST /v1/observaciones` → HTTP 200 (49 ms)
 
 Solicitud:
 ```json
@@ -4375,51 +4123,51 @@ Solicitud:
   "ventas": [
     {
       "familia_id": "abarrotes",
-      "ventas": 637
+      "ventas": 715
     },
     {
       "familia_id": "bebe",
-      "ventas": 98
+      "ventas": 100
     },
     {
       "familia_id": "bebidas",
-      "ventas": 681
+      "ventas": 732
     },
     {
       "familia_id": "carnes",
-      "ventas": 247
+      "ventas": 227
     },
     {
       "familia_id": "cuidado_personal",
-      "ventas": 259
+      "ventas": 280
     },
     {
       "familia_id": "frutas_verduras",
-      "ventas": 408
+      "ventas": 386
     },
     {
       "familia_id": "lacteos",
-      "ventas": 395
+      "ventas": 477
     },
     {
       "familia_id": "licores",
-      "ventas": 107
+      "ventas": 123
     },
     {
       "familia_id": "limpieza",
-      "ventas": 356
+      "ventas": 361
     },
     {
       "familia_id": "mascotas",
-      "ventas": 81
+      "ventas": 84
     },
     {
       "familia_id": "panaderia",
-      "ventas": 330
+      "ventas": 346
     },
     {
       "familia_id": "snacks",
-      "ventas": 396
+      "ventas": 398
     }
   ]
 }
@@ -4437,7 +4185,7 @@ Respuesta:
 ```
 
 
-**Observaciones 2026-03-01 tienda 1 (2º envío idéntico)** — `POST /v1/observaciones` → HTTP 200 (11 ms)
+**Observaciones 2026-03-01 tienda 1 (2º envío idéntico)** — `POST /v1/observaciones` → HTTP 200 (13 ms)
 
 Solicitud:
 ```json
@@ -4447,51 +4195,51 @@ Solicitud:
   "ventas": [
     {
       "familia_id": "abarrotes",
-      "ventas": 637
+      "ventas": 715
     },
     {
       "familia_id": "bebe",
-      "ventas": 98
+      "ventas": 100
     },
     {
       "familia_id": "bebidas",
-      "ventas": 681
+      "ventas": 732
     },
     {
       "familia_id": "carnes",
-      "ventas": 247
+      "ventas": 227
     },
     {
       "familia_id": "cuidado_personal",
-      "ventas": 259
+      "ventas": 280
     },
     {
       "familia_id": "frutas_verduras",
-      "ventas": 408
+      "ventas": 386
     },
     {
       "familia_id": "lacteos",
-      "ventas": 395
+      "ventas": 477
     },
     {
       "familia_id": "licores",
-      "ventas": 107
+      "ventas": 123
     },
     {
       "familia_id": "limpieza",
-      "ventas": 356
+      "ventas": 361
     },
     {
       "familia_id": "mascotas",
-      "ventas": 81
+      "ventas": 84
     },
     {
       "familia_id": "panaderia",
-      "ventas": 330
+      "ventas": 346
     },
     {
       "familia_id": "snacks",
-      "ventas": 396
+      "ventas": 398
     }
   ]
 }
@@ -4509,7 +4257,7 @@ Respuesta:
 ```
 
 
-**Pronóstico 2026-03-02 tienda 1** — `POST /v1/prediccion` → HTTP 200 (82 ms)
+**Pronóstico 2026-03-02 tienda 1** — `POST /v1/prediccion` → HTTP 200 (99 ms)
 
 Solicitud:
 ```json
@@ -4578,73 +4326,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
-      "venta_esperada": 567.8,
-      "cantidad_sugerida": 687
+      "venta_esperada": 572.66,
+      "cantidad_sugerida": 693
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
-      "venta_esperada": 67.29,
-      "cantidad_sugerida": 87
+      "venta_esperada": 64.55,
+      "cantidad_sugerida": 83
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 5,
       "venta_esperada": 664.82,
       "cantidad_sugerida": 804
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
-      "venta_esperada": 219.55,
-      "cantidad_sugerida": 195
+      "venta_esperada": 217.2,
+      "cantidad_sugerida": 193
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 1,
-      "venta_esperada": 230.86,
-      "cantidad_sugerida": 309
+      "venta_esperada": 227.49,
+      "cantidad_sugerida": 305
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
-      "venta_esperada": 318.86,
-      "cantidad_sugerida": 287
+      "venta_esperada": 307.12,
+      "cantidad_sugerida": 276
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 6,
-      "venta_esperada": 343.55,
-      "cantidad_sugerida": 333
+      "venta_esperada": 351.86,
+      "cantidad_sugerida": 341
     },
     {
       "familia_id": "licores",
-      "en_promocion": 6,
-      "venta_esperada": 122.48,
-      "cantidad_sugerida": 170
+      "venta_esperada": 126.1,
+      "cantidad_sugerida": 175
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 229.21,
       "cantidad_sugerida": 293
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
-      "venta_esperada": 51.07,
+      "venta_esperada": 51.29,
       "cantidad_sugerida": 63
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 290.17,
       "cantidad_sugerida": 235
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 0,
       "venta_esperada": 279.15,
       "cantidad_sugerida": 318
     }
@@ -4661,9 +4397,9 @@ Respuesta:
 
 ## 4. Ciclo de reentrenamiento y hot-reload
 
-- ✅ POST /admin/reentrenar → 202 con id (texto)
+- ✅ POST /admin/reentrenar (sin cuerpo) → 202 con exactamente {id: texto}
 - ✅ el estado pasa de 'en_curso' a 'exitoso'
-- ✅ incluye promovido (bool), version (str) y motivo (str)
+- ✅ respuesta exacta {estado, promovido (bool), version (str), motivo (str)}
 - ✅ GET /admin/reentrenar/{id inexistente} → 404
 - ✅ hot-reload: GET /modelo pasa a v2 en < 2 min
 - ✅ POST /v1/prediccion usa la nueva versión
@@ -4671,11 +4407,11 @@ Respuesta:
 - ✅ el contenedor api no se reinició
 
 Notas:
-- La compuerta no promovió (motivo: el candidato no redujo el costo de validación (90924.70 frente a 90471.60 del vigente) en la ventana 2026-02-08..2026-03-07; se conserva v1 como @champion). Se verificó el hot-reload moviendo @champion al challenger v2 directamente en MLflow y restaurando v1.
+- La compuerta no promovió (motivo: el candidato no redujo el costo de validación (91061.40 frente a 90569.00 del vigente) en la ventana 2026-02-08..2026-03-07; se conserva v1 como @champion). Se verificó el hot-reload moviendo @champion al challenger v2 directamente en MLflow y restaurando v1.
 
 <details><summary>Evidencia (JSON reales)</summary>
 
-**Modelo antes del reentrenamiento** — `GET /modelo` → HTTP 200 (2 ms)
+**Modelo antes del reentrenamiento** — `GET /modelo` → HTTP 200 (3 ms)
 
 Respuesta:
 ```json
@@ -4687,31 +4423,30 @@ Respuesta:
 ```
 
 
-**Disparo del reentrenamiento** — `POST /admin/reentrenar` → HTTP 202 (185 ms)
+**Disparo del reentrenamiento** — `POST /admin/reentrenar` → HTTP 202 (198 ms)
 
 Respuesta:
 ```json
 {
-  "id": "4df7b257ce324b4cb22774dca96fba93"
+  "id": "ce24f2e5b972493e9f77ff1ff05206fa"
 }
 ```
 
 
-**Estado final de la ejecución (30 s)** — `GET /admin/reentrenar/4df7b257ce324b4cb22774dca96fba93` → HTTP 200 (14 ms)
+**Estado final de la ejecución (35 s)** — `GET /admin/reentrenar/ce24f2e5b972493e9f77ff1ff05206fa` → HTTP 200 (5 ms)
 
 Respuesta:
 ```json
 {
-  "id": "4df7b257ce324b4cb22774dca96fba93",
   "estado": "exitoso",
   "promovido": false,
   "version": "1",
-  "motivo": "el candidato no redujo el costo de validación (90924.70 frente a 90471.60 del vigente) en la ventana 2026-02-08..2026-03-07; se conserva v1 como @champion"
+  "motivo": "el candidato no redujo el costo de validación (91061.40 frente a 90569.00 del vigente) en la ventana 2026-02-08..2026-03-07; se conserva v1 como @champion"
 }
 ```
 
 
-**Id inexistente** — `GET /admin/reentrenar/id-que-no-existe` → HTTP 404 (14 ms)
+**Id inexistente** — `GET /admin/reentrenar/id-que-no-existe` → HTTP 404 (4 ms)
 
 Respuesta:
 ```json
@@ -4721,7 +4456,7 @@ Respuesta:
 ```
 
 
-**Predicción tras la promoción controlada a v2** — `POST /v1/prediccion` → HTTP 200 (95 ms)
+**Predicción tras la promoción controlada a v2** — `POST /v1/prediccion` → HTTP 200 (109 ms)
 
 Solicitud:
 ```json
@@ -4790,73 +4525,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 999.55,
       "cantidad_sugerida": 1209
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 62.28,
       "cantidad_sugerida": 84
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 1003.18,
       "cantidad_sugerida": 1264
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 223.32,
       "cantidad_sugerida": 203
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 175.32,
       "cantidad_sugerida": 238
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 362.77,
       "cantidad_sugerida": 330
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 422.04,
       "cantidad_sugerida": 418
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.28,
       "cantidad_sugerida": 118
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 203.07,
       "cantidad_sugerida": 266
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.18,
       "cantidad_sugerida": 57
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 223.03,
       "cantidad_sugerida": 183
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.08,
       "cantidad_sugerida": 403
     }
@@ -4885,14 +4608,14 @@ Respuesta:
 
 ## 5. Caída de MLflow
 
-- ✅ GET /health → 200 con estado 'degradado' y motivo en <= 30 s
+- ✅ GET /health → 200 con exactamente {estado: 'degradado', motivo} en <= 30 s
 - ✅ POST /v1/prediccion sigue respondiendo 200 con el modelo en memoria
-- ✅ predicción con MLflow detenido: version_modelo str, cantidad_sugerida int >= 0, calidad válida
+- ✅ predicción con MLflow detenido: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, calidad válida
 - ✅ GET /health vuelve a 'ok' en < 2 min
 
 <details><summary>Evidencia (JSON reales)</summary>
 
-**Salud con MLflow detenido (6 s)** — `GET /health` → HTTP 200 (2 ms)
+**Salud con MLflow detenido (14 s)** — `GET /health` → HTTP 200 (2 ms)
 
 Respuesta:
 ```json
@@ -4903,7 +4626,7 @@ Respuesta:
 ```
 
 
-**Predicción con MLflow detenido** — `POST /v1/prediccion` → HTTP 200 (95 ms)
+**Predicción con MLflow detenido** — `POST /v1/prediccion` → HTTP 200 (91 ms)
 
 Solicitud:
 ```json
@@ -4972,73 +4695,61 @@ Respuesta:
   "predicciones": [
     {
       "familia_id": "abarrotes",
-      "en_promocion": 0,
       "venta_esperada": 1022.52,
       "cantidad_sugerida": 1237
     },
     {
       "familia_id": "bebe",
-      "en_promocion": 0,
       "venta_esperada": 61.49,
       "cantidad_sugerida": 79
     },
     {
       "familia_id": "bebidas",
-      "en_promocion": 8,
       "venta_esperada": 989.43,
       "cantidad_sugerida": 1197
     },
     {
       "familia_id": "carnes",
-      "en_promocion": 0,
       "venta_esperada": 213.54,
       "cantidad_sugerida": 190
     },
     {
       "familia_id": "cuidado_personal",
-      "en_promocion": 0,
       "venta_esperada": 178.08,
       "cantidad_sugerida": 239
     },
     {
       "familia_id": "frutas_verduras",
-      "en_promocion": 0,
       "venta_esperada": 373.32,
       "cantidad_sugerida": 336
     },
     {
       "familia_id": "lacteos",
-      "en_promocion": 0,
       "venta_esperada": 424.31,
       "cantidad_sugerida": 412
     },
     {
       "familia_id": "licores",
-      "en_promocion": 0,
       "venta_esperada": 80.86,
       "cantidad_sugerida": 112
     },
     {
       "familia_id": "limpieza",
-      "en_promocion": 0,
       "venta_esperada": 202.2,
       "cantidad_sugerida": 259
     },
     {
       "familia_id": "mascotas",
-      "en_promocion": 0,
       "venta_esperada": 44.77,
       "cantidad_sugerida": 55
     },
     {
       "familia_id": "panaderia",
-      "en_promocion": 0,
       "venta_esperada": 224.15,
       "cantidad_sugerida": 182
     },
     {
       "familia_id": "snacks",
-      "en_promocion": 9,
       "venta_esperada": 353.21,
       "cantidad_sugerida": 403
     }
@@ -5051,7 +4762,7 @@ Respuesta:
 ```
 
 
-**Salud tras reiniciar MLflow (15 s)** — `GET /health` → HTTP 200 (4 ms)
+**Salud tras reiniciar MLflow (15 s)** — `GET /health` → HTTP 200 (8 ms)
 
 Respuesta:
 ```json
@@ -5077,11 +4788,11 @@ Respuesta:
 - ✅ reenviar una observación ya guardada tras el reinicio → registros_guardados 0
 
 Notas:
-- `docker compose down` y `up -d` ejecutados; up tardó 24 s.
+- `docker compose down` y `up -d` ejecutados; up tardó 23 s.
 
 <details><summary>Evidencia (JSON reales)</summary>
 
-**Modelo antes de down** — `GET /modelo` → HTTP 200 (5 ms)
+**Modelo antes de down** — `GET /modelo` → HTTP 200 (8 ms)
 
 Respuesta:
 ```json
@@ -5143,16 +4854,16 @@ Después de `up -d`:
 
 Log del bootstrap tras `up -d`:
 ```
-bootstrap-1  | 2026-11-15 07:06:02,074 INFO novamercado.bootstrap: catálogos ya cargados (10 tiendas, 12 familias): se conservan
-bootstrap-1  | 2026-11-15 07:06:02,074 INFO novamercado.bootstrap: histórico ya cargado (83052 filas) y 840 observaciones: se conservan
-bootstrap-1  | 2026-11-15 07:06:02,100 INFO novamercado.bootstrap: datos listos: {'tiendas': 10, 'familias': 12, 'historico': 83052, 'observaciones': 840}
-bootstrap-1  | 2026-11-15 07:06:04,202 INFO novamercado.bootstrap: MLflow disponible
-bootstrap-1  | 2026-11-15 07:06:04,283 INFO novamercado.bootstrap: ya existe novamercado-pronostico@champion (v1): no se reentrena
-bootstrap-1  | 2026-11-15 07:06:04,284 INFO novamercado.bootstrap: bootstrap completo: @champion = v1
+bootstrap-1  | 2026-11-16 02:22:04,853 INFO novamercado.bootstrap: catálogos ya cargados (10 tiendas, 12 familias): se conservan
+bootstrap-1  | 2026-11-16 02:22:04,853 INFO novamercado.bootstrap: histórico ya cargado (83052 filas) y 840 observaciones: se conservan
+bootstrap-1  | 2026-11-16 02:22:04,884 INFO novamercado.bootstrap: datos listos: {'tiendas': 10, 'familias': 12, 'historico': 83052, 'observaciones': 840}
+bootstrap-1  | 2026-11-16 02:22:06,735 INFO novamercado.bootstrap: MLflow disponible
+bootstrap-1  | 2026-11-16 02:22:06,805 INFO novamercado.bootstrap: ya existe novamercado-pronostico@champion (v1): no se reentrena
+bootstrap-1  | 2026-11-16 02:22:06,806 INFO novamercado.bootstrap: bootstrap completo: @champion = v1
 ```
 
 
-**Reenvío de una observación ya guardada tras el reinicio** — `POST /v1/observaciones` → HTTP 200 (289 ms)
+**Reenvío de una observación ya guardada tras el reinicio** — `POST /v1/observaciones` → HTTP 200 (281 ms)
 
 Solicitud:
 ```json

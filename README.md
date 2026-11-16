@@ -45,7 +45,10 @@ configuración llega por variables de entorno (`.env`).
 
 ## Dónde colocar los archivos publicados
 
-Los datos **no se versionan**. Copia los archivos publicados exactamente en `data/raw/`:
+Los datos **no forman parte del repositorio ni de su historial de Git** (`data/raw/*` y `*.csv` están en
+`.gitignore`). Antes de levantar el stack, el evaluador debe copiar los archivos publicados
+**en la carpeta `data/raw/` de la raíz del repositorio**, respetando estos nombres y subcarpetas
+(`docker compose` la monta en solo lectura como `/datos` dentro de los contenedores):
 
 ```
 data/raw/tiendas.csv
@@ -58,6 +61,9 @@ data/raw/ejemplos/prediccion_valida.json
 data/raw/ejemplos/observacion_valida.json
 data/raw/errores/E01_tienda_texto.json … E10_numero_formato.json
 ```
+
+Si falta `data/raw/historico_ventas.csv`, el servicio `bootstrap` no puede cargar la base y `/health`
+responde 503; las pruebas (`pytest`) se omiten con un aviso.
 
 ## Levantar todo desde cero
 
@@ -84,10 +90,10 @@ Al volver a levantar con los volúmenes existentes, `bootstrap` detecta que los 
 
 | Método y ruta | Respuesta |
 |---|---|
-| `POST /v1/prediccion` | 200 `{tienda_id, fecha, version_modelo, predicciones: [{familia_id, en_promocion, venta_esperada, cantidad_sugerida}], calidad}` · 422 `{detail}` |
+| `POST /v1/prediccion` | 200 `{tienda_id, fecha, version_modelo, predicciones: [{familia_id, venta_esperada, cantidad_sugerida}], calidad}` · 422 `{detail}` |
 | `POST /v1/observaciones` | 200 `{registros_guardados, calidad}` (idempotente) · 422 `{detail}` |
 | `POST /admin/reentrenar` | 202 `{id}` · 503 si Airflow no puede iniciarlo |
-| `GET /admin/reentrenar/{id}` | `{id, estado: en_curso\|exitoso\|fallido}` + al terminar `promovido`, `version`, `motivo` · 404 |
+| `GET /admin/reentrenar/{id}` | `{estado: en_curso\|exitoso\|fallido}` + al terminar `promovido`, `version`, `motivo` · 404 |
 | `GET /modelo` | `{nombre, alias: "champion", version}` |
 | `GET /health` | 200 `{"estado":"ok"}` · 200 `{"estado":"degradado","motivo":…}` · 503 sin modelo |
 

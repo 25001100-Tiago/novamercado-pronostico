@@ -125,17 +125,34 @@ def esperar(condicion, limite: float, pausa: float = 3.0):
     return valor, time.time() - t0
 
 
+CAMPOS_RESPUESTA_PREDICCION = {"tienda_id", "fecha", "version_modelo", "predicciones", "calidad"}
+CAMPOS_PREDICCION = {"familia_id", "venta_esperada", "cantidad_sugerida"}
+CAMPOS_OBSERVACION_CALIDAD = {"campo", "accion", "detalle"}
+
+
+def _es_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
 def validar_prediccion(s: Seccion, datos, etiqueta: str) -> bool:
-    ok = isinstance(datos, dict) and isinstance(datos.get("version_modelo"), str) and bool(datos.get("predicciones"))
+    """Formato exacto del Anexo: mismos campos (ni más ni menos) y tipos str/int/float."""
+    ok = isinstance(datos, dict) and set(datos) == CAMPOS_RESPUESTA_PREDICCION
+    ok = ok and _es_int(datos["tienda_id"]) and isinstance(datos["fecha"], str)
+    ok = ok and isinstance(datos["version_modelo"], str) and bool(datos["predicciones"])
     ok = ok and all(
-        isinstance(p.get("cantidad_sugerida"), int) and not isinstance(p.get("cantidad_sugerida"), bool)
-        and p["cantidad_sugerida"] >= 0 for p in datos["predicciones"]
+        isinstance(p, dict) and set(p) == CAMPOS_PREDICCION and isinstance(p["familia_id"], str)
+        and isinstance(p["venta_esperada"], (int, float)) and not isinstance(p["venta_esperada"], bool)
+        and _es_int(p["cantidad_sugerida"]) and p["cantidad_sugerida"] >= 0
+        for p in datos["predicciones"]
     )
     calidad = datos.get("calidad", {}) if isinstance(datos, dict) else {}
+    ok = ok and isinstance(calidad, dict) and set(calidad) == {"estado", "observaciones"}
     ok = ok and calidad.get("estado") in ("ok", "corregido", "advertencia")
     ok = ok and ((calidad.get("estado") == "ok") == (calidad.get("observaciones") == []))
-    return s.chequear(f"{etiqueta}: version_modelo str, cantidad_sugerida int >= 0, calidad válida", ok,
-                      _json(datos, 300))
+    ok = ok and all(set(o) == CAMPOS_OBSERVACION_CALIDAD and o["accion"] in ("reparar", "advertir")
+                    for o in calidad.get("observaciones") or [])
+    return s.chequear(f"{etiqueta}: campos exactos del Anexo, version_modelo str, cantidad_sugerida int >= 0, "
+                      "calidad válida", ok, _json(datos, 300))
 
 
 # --------------------------------------------------------------------------- #
@@ -150,11 +167,13 @@ def prueba_salud(a: Auditoria) -> None:
     _, seg = esperar(sano, 180, 3)
     codigo, datos = a.llamar("GET", "/health", evidencia="Salud")
     s.notas.append(f"/health respondió 'ok' tras {seg:.0f} s de espera")
-    s.chequear("GET /health → 200 con estado == 'ok'", codigo == 200 and datos.get("estado") == "ok", _json(datos))
+    s.chequear("GET /health → 200 con exactamente {\"estado\": \"ok\"}", codigo == 200 and datos == {"estado": "ok"},
+               _json(datos))
     c, m = a.llamar("GET", "/modelo", evidencia="Modelo vigente")
     s.chequear("GET /modelo → 200", c == 200, _json(m))
-    s.chequear("nombre, alias y version son str",
-               isinstance(m, dict) and all(isinstance(m.get(k), str) and m.get(k) for k in ("nombre", "alias", "version")),
+    s.chequear("exactamente {nombre, alias, version}, todos str",
+               isinstance(m, dict) and set(m) == {"nombre", "alias", "version"}
+               and all(isinstance(m.get(k), str) and m.get(k) for k in ("nombre", "alias", "version")),
                _json(m))
     s.chequear("alias == 'champion'", isinstance(m, dict) and m.get("alias") == "champion")
 
@@ -219,6 +238,10 @@ def prueba_contrato(a: Auditoria) -> None:
         c, d = a.llamar("POST", endpoint, cuerpo, evidencia=f"ejemplos/{ruta.name}")
         s.chequear(f"ejemplos/{ruta.name} → 200 y calidad 'ok'",
                    c == 200 and d.get("calidad") == {"estado": "ok", "observaciones": []}, _json(d, 300))
+        if endpoint == "/v1/observaciones" and c == 200:
+            s.chequear(f"ejemplos/{ruta.name}: exactamente {{registros_guardados (int), calidad}}",
+                       set(d) == {"registros_guardados", "calidad"} and _es_int(d["registros_guardados"]),
+                       _json(d, 300))
         if endpoint == "/v1/prediccion" and c == 200:
             validar_prediccion(s, d, f"ejemplos/{ruta.name}")
 
@@ -374,7 +397,8 @@ def prueba_reentrenamiento(a: Auditoria) -> None:
     inicio_api = _inicio_contenedor_api()
     _, antes = a.llamar("GET", "/modelo", evidencia="Modelo antes del reentrenamiento")
     c, d = a.llamar("POST", "/admin/reentrenar", evidencia="Disparo del reentrenamiento")
-    s.chequear("POST /admin/reentrenar → 202 con id (texto)", c == 202 and isinstance(d.get("id"), str) and d["id"],
+    s.chequear("POST /admin/reentrenar (sin cuerpo) → 202 con exactamente {id: texto}",
+               c == 202 and isinstance(d, dict) and set(d) == {"id"} and isinstance(d["id"], str) and d["id"],
                _json(d))
     if c != 202:
         return
@@ -391,8 +415,9 @@ def prueba_reentrenamiento(a: Auditoria) -> None:
     a.llamar("GET", f"/admin/reentrenar/{id_}", evidencia=f"Estado final de la ejecución ({seg:.0f} s)")
     s.chequear("el estado pasa de 'en_curso' a 'exitoso'", vistos[:1] == ["en_curso"] and final and final.get("estado") == "exitoso",
                f"secuencia {vistos} final {final}")
-    s.chequear("incluye promovido (bool), version (str) y motivo (str)",
-               bool(final) and isinstance(final.get("promovido"), bool) and isinstance(final.get("version"), str)
+    s.chequear("respuesta exacta {estado, promovido (bool), version (str), motivo (str)}",
+               bool(final) and set(final) == {"estado", "promovido", "version", "motivo"}
+               and isinstance(final.get("promovido"), bool) and isinstance(final.get("version"), str)
                and isinstance(final.get("motivo"), str) and final["motivo"], _json(final))
     c404, d404 = a.llamar("GET", "/admin/reentrenar/id-que-no-existe", evidencia="Id inexistente")
     s.chequear("GET /admin/reentrenar/{id inexistente} → 404", c404 == 404, _json(d404))
@@ -442,8 +467,9 @@ def prueba_caida_mlflow(a: Auditoria) -> None:
 
     res, seg = esperar(degradado, 30, 2)
     a.llamar("GET", "/health", evidencia=f"Salud con MLflow detenido ({time.time() - t0:.0f} s)")
-    s.chequear("GET /health → 200 con estado 'degradado' y motivo en <= 30 s",
-               bool(res) and bool(res[1].get("motivo")), f"{seg:.0f} s, {res}")
+    s.chequear("GET /health → 200 con exactamente {estado: 'degradado', motivo} en <= 30 s",
+               bool(res) and set(res[1]) == {"estado", "motivo"} and bool(res[1].get("motivo")),
+               f"{seg:.0f} s, {res}")
     c, p = a.llamar("POST", "/v1/prediccion", pedido, evidencia="Predicción con MLflow detenido")
     s.chequear("POST /v1/prediccion sigue respondiendo 200 con el modelo en memoria", c == 200)
     if c == 200:

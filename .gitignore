@@ -29,7 +29,9 @@ logs/
 data/*
 !data/raw/
 data/raw/*
+data/raw/*.csv
 !data/raw/LEEME.md
+*.csv
 *.db
 *.sqlite
 

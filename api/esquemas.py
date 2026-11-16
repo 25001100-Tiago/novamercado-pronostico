@@ -142,8 +142,9 @@ class SolicitudObservaciones(_SolicitudBase):
 # Respuestas
 # --------------------------------------------------------------------------- #
 class PrediccionFamilia(_Base):
-    familia_id: str
-    en_promocion: int = Field(ge=0)
+    """Exactamente los campos del Anexo: ``familia_id``, ``venta_esperada``, ``cantidad_sugerida``."""
+
+    familia_id: StrictStr
     venta_esperada: float = Field(ge=0)
     cantidad_sugerida: StrictInt = Field(ge=0)
 
@@ -181,11 +182,11 @@ class EstadoReentrenamiento(BaseModel):
     motivo: StrictStr | None = None
 
     def a_respuesta(self) -> dict[str, Any]:
-        """Mientras está en curso solo se informan id y estado; al terminar, todo."""
+        """Formato del Anexo: en curso solo ``estado``; al terminar, ``estado``, ``promovido``,
+        ``version`` y ``motivo`` (el ``id`` ya va en la URL y no se repite)."""
         if self.estado == "en_curso":
-            return {"id": self.id, "estado": self.estado}
+            return {"estado": self.estado}
         return {
-            "id": self.id,
             "estado": self.estado,
             "promovido": bool(self.promovido),
             "version": self.version or "",

@@ -198,8 +198,8 @@ def crear_app(fabrica: Callable[[], Contexto] = contexto_por_defecto, iniciar_ta
         feats = construir_features(historia, objetivos, cat)
         venta, cantidad = modelo.artefacto.predecir(feats)
         predicciones = [
-            PrediccionFamilia(familia_id=f.familia_id, en_promocion=f.en_promocion,
-                              venta_esperada=round(float(v), 2), cantidad_sugerida=int(c))
+            PrediccionFamilia(familia_id=f.familia_id, venta_esperada=round(float(v), 2),
+                              cantidad_sugerida=int(c))
             for f, v, c in zip(solicitud.familias, venta, cantidad)
         ]
         respuesta = RespuestaPrediccion(
@@ -209,8 +209,8 @@ def crear_app(fabrica: Callable[[], Contexto] = contexto_por_defecto, iniciar_ta
         sid = ctx.repo.registrar_solicitud("/v1/prediccion", crudo, 200, payload_limpio=solicitud, calidad=calidad)
         ctx.repo.registrar_predicciones(
             sid, solicitud.tienda_id, solicitud.fecha,
-            [{"familia_id": p.familia_id, "en_promocion": p.en_promocion, "prediccion": p.venta_esperada}
-             for p in predicciones],
+            [{"familia_id": f.familia_id, "en_promocion": f.en_promocion, "prediccion": p.venta_esperada}
+             for f, p in zip(solicitud.familias, predicciones)],
             str(modelo.version),
         )
         return respuesta
